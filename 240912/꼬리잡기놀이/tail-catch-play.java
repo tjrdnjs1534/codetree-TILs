@@ -80,7 +80,7 @@ public class Main {
                     int idx = 0;
                     for(int[] ls :teams.get(team_n)) {
                     	idx++;
-                    	if(ls[0] == curX && curY==ls[0]) {
+                    	if(ls[0] == curX && curY==ls[1]) {
                     		break;
                     	}
                     }
