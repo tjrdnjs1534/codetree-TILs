@@ -1,162 +1,188 @@
-import java.util.*;
-import java.io.*;
-
+import java.util.Scanner;
 
 public class Main {
-    static int n,m,q;
-    static ArrayList<Integer>[] circles;
-    public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine());
-        n = Integer.parseInt(st.nextToken());
-        m = Integer.parseInt(st.nextToken());
-        q = Integer.parseInt(st.nextToken());
-        circles = new ArrayList[n+1];
 
-        for(int i=1; i<=n; i++){
-            circles[i] = new ArrayList<>();
-            st = new StringTokenizer(br.readLine());
-            for(int j=0; j<m; j++){
-                int num = Integer.parseInt(st.nextToken());
-                circles[i].add(num);
-            }
-        }
-        for(int i=0; i<q; i++){
-            st = new StringTokenizer(br.readLine());
-            int x = Integer.parseInt(st.nextToken());
-            // 0 clock, 1 counterClock
-            int d = Integer.parseInt(st.nextToken());
-            int k = Integer.parseInt(st.nextToken());
-            rotatesCircles(x,d,k);
-            boolean deleted = erase();
-            if(!deleted) {
-                nomalize();
-            }
-            // print();
-        }
-        printAns();
-        
-    }
-    public static void rotatesCircles(int x, int d, int k){
-        for(int i=1; i<=n; i++){
-            if(i%x==0) rotate(circles[i], d, k);
+    static final int MAX = 50 + 5;
+    static int T;
+    static int N, M, Q;
+
+    static int[][] circle = new int[MAX][MAX];
+    static int[] X = new int[MAX];
+    static int[] D = new int[MAX];
+    static int[] K = new int[MAX];
+
+    static class Queue {
+        int r, c;
+
+        Queue(int r, int c) {
+            this.r = r;
+            this.c = c;
         }
     }
-    public static void rotate(ArrayList<Integer> arr, int d, int k){
-        if(d==0){
-            for(int i=0; i<k; i++){
-                int tmp = arr.get(arr.size()-1);
-                arr.remove(arr.size()-1);
-                arr.add(0,tmp);
-            }
-        }
-        else {
-            for(int i=0; i<k; i++){
-                int tmp = arr.get(0);
-                arr.remove(0);
-                arr.add(tmp);
-            }
+
+    static Queue[] queue = new Queue[MAX * MAX];
+    static int wp, rp;
+
+    /* 순서대로 왼쪽, 위, 오른쪽, 아래 */
+    static int[] dr = {0, -1, 0, 1};
+    static int[] dc = {-1, 0, 1, 0};
+
+    public static void input(Scanner sc) {
+        N = sc.nextInt();
+        M = sc.nextInt();
+        Q = sc.nextInt();
+
+        for (int r = 0; r < N; r++)
+            for (int c = 0; c < M; c++)
+                circle[r][c] = sc.nextInt();
+
+        for (int i = 0; i < Q; i++) {
+            X[i] = sc.nextInt();
+            D[i] = sc.nextInt();
+            K[i] = sc.nextInt();
         }
     }
-    public static boolean erase(){
-        boolean flag = false;
-        ArrayList<Integer>[] tmp = new ArrayList[n+1];
-        for(int i=1; i<=n; i++){
-            tmp[i]= new ArrayList<>();
-            for(int j=0; j<m; j++){
-                tmp[i].add(circles[i].get(j));
+
+    public static void output() {
+        for (int r = 0; r < N; r++) {
+            for (int c = 0; c < M; c++)
+                System.out.print(circle[r][c] + " ");
+            System.out.println();
+        }
+    }
+
+    public static void rotate(int x, int d, int k) {
+        int[] tmp = new int[MAX];
+
+        if (d == 1) k = M - k; /* 반시계 방향 k칸은 시계 방향으로 M - k 칸 */
+
+        for (int r = x - 1; r < N; r += x) {
+            for (int c = 0; c < M - k; c++) tmp[c + k] = circle[r][c];
+            for (int c = M - k; c < M; c++) tmp[c - (M - k)] = circle[r][c];
+            for (int c = 0; c < M; c++) circle[r][c] = tmp[c];
+        }
+    }
+
+    public static int BFS(int r, int c, int[][] visit) {
+        int flag = 0;
+
+        wp = rp = 0;
+
+        queue[wp++] = new Queue(r, c);
+        visit[r][c] = 1;
+
+        while (wp > rp) {
+            Queue out = queue[rp++];
+
+            if (out.c == 0) {
+                if (circle[out.r][M - 1] == circle[r][c] && visit[out.r][M - 1] == 0) {
+                    queue[wp++] = new Queue(out.r, M - 1);
+                    visit[out.r][M - 1] = 1;
+                    flag = 1;
+                }
+            } else if (out.c == M - 1) {
+                if (circle[out.r][0] == circle[r][c] && visit[out.r][0] == 0) {
+                    queue[wp++] = new Queue(out.r, 0);
+                    visit[out.r][0] = 1;
+                    flag = 1;
+                }
+            }
+
+            for (int k = 0; k < 4; k++) {
+                int nr = out.r + dr[k];
+                int nc = out.c + dc[k];
+
+                if (nr < 0 || nr >= N || nc < 0 || nc >= M) continue;
+
+                if (circle[nr][nc] == circle[r][c] && visit[nr][nc] == 0) {
+                    queue[wp++] = new Queue(nr, nc);
+                    visit[nr][nc] = 1;
+                    flag = 1;
+                }
             }
         }
 
-        for(int i=1; i<=n; i++){
-            ArrayList<Integer> now = circles[i];
-            for(int j=0; j<m; j++){
-                int num = now.get(j);
-                int left = j-1 < 0 ?  m-1 : j-1;
-                int right = j+1 > m-1 ? 0 : j+1;
-
-                int leftNum = now.get(left);
-                int rightNum = now.get(right);
-                if(leftNum == num || rightNum == num){
-                    tmp[i].set(j, -1);
-                    flag = true;
-                    continue;
-                }
-
-            
-                int next = i+1;
-                boolean changed= false;
-                while(next<n){
-                    ArrayList<Integer> nextD = circles[next];
-                    if(nextD.get(j) == num){
-                        tmp[next].set(j, -1);
-                        flag = true;
-                        changed = true;
-                    }
-                    else{
-                        break;
-                    }
-                    next++;
-                    
-                }
-                if(changed){
-                    tmp[i].set(j,-1);
-                }
-            }
-        }    
-        for(int i=1; i<=n; i++){
-            circles[i] = new ArrayList(tmp[i]);
-        }
         return flag;
     }
 
-    public static void print(){
-        for(int i=1; i<=n; i++){
-            ArrayList<Integer> now = circles[i];
-            for(int j=0; j<m; j++){
-                int num = now.get(j);
-                System.out.print(num + " ");
-            }
-            System.out.println();
-        }    
-    }
-    public static void nomalize(){
-        int cnt = 0;
-        int sum = 0;
-        for(int i=1; i<=n; i++){
-            for(int j=0; j<m; j++){
-                int num = circles[i].get(j);
-                if(num==-1)continue;
-                cnt++;
-                sum+=num;
+    public static void deleteCircle(int[][] visit) {
+        for (int r = 0; r < N; r++) {
+            for (int c = 0; c < M; c++) {
+                if (visit[r][c] == 1) circle[r][c] = 0;
             }
         }
-        if(cnt==0) return;
+    }
+
+    public static void averageCircle() {
+        int sum = 0, cnt = 0;
+
+        for (int r = 0; r < N; r++) {
+            for (int c = 0; c < M; c++) {
+                if (circle[r][c] != 0) {
+                    sum += circle[r][c];
+                    cnt++;
+                }
+            }
+        }
+
+        if (cnt == 0) return;
+
         int avg = sum / cnt;
 
-        for(int i=1; i<=n; i++){
-            for(int j=0; j<m; j++){
-                int num = circles[i].get(j);
-                if(num==-1)continue;
-                if(num< avg) {
-                    circles[i].set(j,num+1);
-                }
-                else if(num>avg){
-                    circles[i].set(j,num-1);
-                }
+        for (int r = 0; r < N; r++) {
+            for (int c = 0; c < M; c++) {
+                if (circle[r][c] == 0) continue;
+
+                if (circle[r][c] < avg) circle[r][c]++;
+                else if (circle[r][c] > avg) circle[r][c]--;
             }
         }
     }
-    public static void printAns(){
-        int sum = 0;
-        for(int i=1; i<=n; i++){
-            for(int j=0; j<m; j++){
-                int num = circles[i].get(j);
-                if(num==-1)continue;
-                sum+=num;
+
+    public static void allBFS() {
+        int[][] visit = new int[MAX][MAX];
+        boolean deleteflag = false;
+
+        for (int r = 0; r < N; r++) {
+            for (int c = 0; c < M; c++) {
+                if (circle[r][c] != 0 && visit[r][c] == 0) {
+                    int tmp = BFS(r, c, visit);
+                    if (tmp == 1) {
+                        deleteCircle(visit);
+                        deleteflag = true;
+                    } else {
+                        visit[r][c] = 0;
+                    }
+                }
             }
         }
-        System.out.println(sum);
-        
+
+        if (!deleteflag) averageCircle();
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        // T = sc.nextInt(); // 여러 테스트 케이스가 있을 경우 사용
+        T = 1;
+        for (int tc = 0; tc < T; tc++) {
+            input(sc);
+
+            for (int q = 0; q < Q; q++) {
+                rotate(X[q], D[q], K[q]);
+                allBFS();
+            }
+
+            int sum = 0;
+            for (int i = 0; i < N; i++) {
+                for (int c = 0; c < M; c++) {
+                    sum += circle[i][c];
+                }
+            }
+
+            System.out.println(sum);
+        }
+
+        sc.close();
     }
 }
