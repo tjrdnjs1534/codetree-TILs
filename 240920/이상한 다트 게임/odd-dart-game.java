@@ -63,7 +63,7 @@ public class Main {
         ArrayList<Integer>[] tmp = new ArrayList[n+1];
         for(int i=1; i<=n; i++){
             tmp[i]= new ArrayList<>();
-            for(int j=0; j<n; j++){
+            for(int j=0; j<m; j++){
                 tmp[i].add(circles[i].get(j));
             }
         }
