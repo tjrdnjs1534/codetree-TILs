@@ -25,6 +25,7 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
         n = Integer.parseInt(st.nextToken());
         m = Integer.parseInt(st.nextToken());
+
         st = new StringTokenizer(br.readLine());
         int x = Integer.parseInt(st.nextToken());
         int y = Integer.parseInt(st.nextToken());
@@ -37,7 +38,7 @@ public class Main {
         ans++;
         for(int i=0; i<n; i++){
             st = new StringTokenizer(br.readLine());
-            for(int j=0; j<n; j++){
+            for(int j=0; j<m; j++){
                 map[i][j]=  Integer.parseInt(st.nextToken());
             }
         }
@@ -62,10 +63,11 @@ public class Main {
                     return;
                 }
             }
-            int nextD = c.d -1 <0 ? 3: c.d-1;
+            int nextD = c.d -1 == -1 ? 3: c.d -1;
             int nx = c.x + dx[nextD];
             int ny = c.y + dy[nextD];
-            if(visited[nx][ny] != true && map[nx][ny] != 1) {
+
+            if(map[nx][ny] != 1 && visited[nx][ny] != true) {
                 c.d = nextD;
                 c.x = nx;
                 c.y = ny;
