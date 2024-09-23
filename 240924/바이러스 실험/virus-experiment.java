@@ -3,13 +3,13 @@ import java.io.*;
 
 public class Main {
     static int n, m, k;
-    static ArrayList<Virus> viruses;
+    static PriorityQueue<Virus> viruses;
     static int[][] map;
     static int[][] plusMap;
     static int[] dx = {-1,1,0,0,-1,-1,1,1};
     static int[] dy = {0,0,-1,1,-1,1,-1,1};
 
-    static class Virus{
+    static class Virus implements Comparable<Virus>{
         int x;
         int y;
         int age;
@@ -20,10 +20,10 @@ public class Main {
             this.age =age;
             this.isDead = 0;
         }
-        // @Override
-        // public int compareTo(Virus o){
-        //     return this.age - o.age;
-        // }
+        @Override
+        public int compareTo(Virus o){
+            return this.age - o.age;
+        }
     }
   
 
@@ -35,7 +35,7 @@ public class Main {
         k = Integer.parseInt(st.nextToken());
         map = new int[n+1][n+1];
         plusMap=new int[n+1][n+1];
-        viruses = new ArrayList<>();
+        viruses = new PriorityQueue<>();
         for(int i=1; i<=n; i++){
             st = new StringTokenizer(br.readLine());
             for(int j=1; j<=n; j++){
@@ -51,16 +51,12 @@ public class Main {
             Virus v = new Virus(x,y,age);
             viruses.add(v);
         }
-        Collections.sort(viruses, (v1,v2)->{
-                return v1.age - v2.age;
-        });
+
         for(int t=1; t<=k; t++){
             eat(t);
             dead(t);
             replica();
-            Collections.sort(viruses, (v1,v2)->{
-                return v1.age - v2.age;
-            });
+            
             plus();
 
         }
@@ -68,8 +64,9 @@ public class Main {
 
     }
     public static void eat(int t){
-        for(int i=0; i<viruses.size(); i++){
-            Virus v = viruses.get(i);
+        PriorityQueue<Virus> tmp = new PriorityQueue<>();
+        while(!viruses.isEmpty()){
+            Virus v = viruses.poll();
             if(v.isDead !=0) continue;
             if(map[v.x][v.y] < v.age) {
                 v.isDead = t;
@@ -78,26 +75,35 @@ public class Main {
                 map[v.x][v.y]-= v.age;
                 v.age+=1;
             }
+            tmp.add(v);
         }
+        viruses = tmp;
     }
     public static void dead(int t){
-        ArrayList<Virus> dead = new ArrayList<>();
-        for(Virus v : viruses){
-            if(v.isDead ==0) continue;
+        PriorityQueue<Virus> tmp = new PriorityQueue<>();
+        while(!viruses.isEmpty()){
+            Virus v = viruses.poll();
+            if(v.isDead ==0) {
+                tmp.add(v);
+                continue;
+            }
             if(v.isDead!=t) {
-                dead.add(v);
                 continue;
             }
             map[v.x][v.y] += v.age/2;
+            tmp.add(v);
         }
-        for(Virus d: dead){
-            viruses.remove(d);
-        }
+        viruses= tmp;
+        
     }
     public static void replica(){
-        ArrayList<Virus> tmp = new ArrayList<>();
-        for(Virus v : viruses){
-            if(v.age%5 !=0) continue;
+        PriorityQueue<Virus> tmp = new PriorityQueue<>();
+        while(!viruses.isEmpty()){
+            Virus v = viruses.poll();
+            if(v.age%5 !=0) {
+                tmp.add(v);
+                continue;
+            }
             if(v.isDead !=0) continue;
             int x = v.x;
             int y = v.y;
@@ -107,10 +113,10 @@ public class Main {
                 if(nx<=0 || nx>n || ny<=0 || ny>n) continue;
                 tmp.add(new Virus(nx,ny,1));
             }
+            tmp.add(v);
         }
-        for(Virus t : tmp){
-            viruses.add(t);
-        }
+        viruses = tmp;
+        
     }
     public static void plus(){
         for(int i=1; i<=n; i++){
@@ -136,12 +142,12 @@ public class Main {
         }
         System.out.println();
     }
-    public static void printV(){
-        for(int i=0; i<viruses.size(); i++){
-            Virus v = viruses.get(i);
-            // if(v.isDead !=0) continue;
-            System.out.println(v.x + " " + v.y + " " + v.age + " " + v.isDead);
-        }
-        System.out.println();
-    }
+    // public static void printV(){
+    //     for(int i=0; i<viruses.size(); i++){
+    //         Virus v = viruses.get(i);
+    //         // if(v.isDead !=0) continue;
+    //         System.out.println(v.x + " " + v.y + " " + v.age + " " + v.isDead);
+    //     }
+    //     System.out.println();
+    // }
 }
