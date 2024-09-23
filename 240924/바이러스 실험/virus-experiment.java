@@ -61,7 +61,6 @@ public class Main {
             Collections.sort(viruses, (v1,v2)->{
                 return v1.age - v2.age;
             });
-            // printV();
             plus();
 
         }
@@ -82,11 +81,17 @@ public class Main {
         }
     }
     public static void dead(int t){
+        ArrayList<Virus> dead = new ArrayList<>();
         for(Virus v : viruses){
             if(v.isDead ==0) continue;
-            if(v.isDead!=t) continue;
+            if(v.isDead!=t) {
+                dead.add(v);
+                continue;
+            }
             map[v.x][v.y] += v.age/2;
-
+        }
+        for(Virus d: dead){
+            viruses.remove(d);
         }
     }
     public static void replica(){
