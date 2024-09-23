@@ -56,9 +56,7 @@ public class Main {
             eat(t);
             dead(t);
             replica();
-            
             plus();
-
         }
         System.out.println(check());
 
@@ -126,12 +124,7 @@ public class Main {
         }
     }
     public static int check(){
-        int cnt = 0;
-        for(Virus v : viruses){
-            if(v.isDead !=0) continue;
-            cnt++;
-        }
-        return cnt;
+        return viruses.size();
     }
     public static void print(){
         for(int i=1; i<=n; i++){
