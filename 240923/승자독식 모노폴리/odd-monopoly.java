@@ -78,7 +78,7 @@ public class Main {
             reduce();
             removeSame();
             mapupdate();
-            // print();
+            // printP();
             int cnt = check();
             if(cnt==1) break;
             step++;
@@ -152,7 +152,7 @@ public class Main {
         }
     }
     public static void mapupdate(){
-        for(int i=1; i<m; i++){
+        for(int i=1; i<=m; i++){
             if(persons[i].isDead) continue;
             Person p = persons[i];
             int x = p.x;
@@ -164,7 +164,7 @@ public class Main {
     }
     public static int check(){
         int cnt =0;
-        for(int i=1; i<m; i++){
+        for(int i=1; i<=m; i++){
             if(persons[i].isDead) continue;
             cnt++;
         }
@@ -176,6 +176,11 @@ public class Main {
                 System.out.print(map[i][j].remainTurn+" ");
             }
             System.out.println();
+        }
+    }
+    public static void printP(){
+        for(int i=1; i<=m; i++){
+            System.out.println(persons[i].idx + " "+ persons[i].x + " " + persons[i].y + " " + persons[i].isDead);
         }
     }
 }
