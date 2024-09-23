@@ -56,7 +56,9 @@ public class Main {
             eat(t);
             dead(t);
             replica();
+            
             plus();
+
         }
         System.out.println(check());
 
@@ -89,7 +91,6 @@ public class Main {
                 continue;
             }
             map[v.x][v.y] += v.age/2;
-            tmp.add(v);
         }
         viruses= tmp;
         
