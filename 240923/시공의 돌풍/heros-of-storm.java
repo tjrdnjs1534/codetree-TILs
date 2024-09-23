@@ -103,16 +103,17 @@ public class Main {
         for(int i=m-1; i>0; i--){
             map[downX][i] = map[downX][i-1];
         }
-        for(int i=downX+1; i<n-1; i++){
-            map[i+1][m-1] = map[i][m-1];
+        for(int i=n-1; i>=downX+1; i--){
+            map[i][m-1] = map[i-1][m-1];
         }
+        
         map[downX+1][m-1] = topRight;
         for(int i=1; i<m-1; i++){
             map[n-1][i-1] = map[n-1][i];
         }
         map[n-1][m-2] = bottomRight;
-        for(int i=0; i>0; i--){
-            map[i-1][0] = map[i][0];
+        for(int i=downX; i<n-1; i++){
+            map[i][0] = map[i+1][0];
         }
         map[n-2][0] = bottomLeft;
         map[downX][0] = 0;
