@@ -1,131 +1,146 @@
 import java.util.*;
-import java.io.*;
 
 public class Main {
-    static int Q;
-    static StringTokenizer st;
-    static int start = 0;
-    static int n;
-    static int m;
-    static HashMap<Integer, Product> products = new HashMap<>();
-    static ArrayList<ArrayList<Node>> graph = new ArrayList<>();
-    static int[] dist;
-    static StringBuilder sb = new StringBuilder();
-    static boolean needDijk = true;
+    static final int INF = Integer.MAX_VALUE;
+    static int n, m;
+    static List<List<Edge>> adj = new ArrayList<>();
+    static int[] cost;
+    static Map<Integer, Integer> itemDict = new HashMap<>();
 
-    static class Node{
-		int to;
-		int distance;
-		public Node(int to, int distance) {
-			this.to = to;
-			this.distance = distance;
-		}
-	}
-    public static class Product{
-        int revenue;
-        int dest;
-        Product(int r, int d){
-            this.revenue = r;
-            this.dest= d;
+    static class Edge {
+        int dest, weight;
+
+        Edge(int dest, int weight) {
+            this.dest = dest;
+            this.weight = weight;
         }
     }
 
-    
+    static class Item implements Comparable<Item> {
+        int itemId, revenue, dest, profit;
 
-    public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        Q = Integer.parseInt(br.readLine());
+        Item(int itemId, int revenue, int dest) {
+            this.itemId = itemId;
+            this.revenue = revenue;
+            this.dest = dest;
+            updateProfit();
+        }
 
-        for(int i=0; i<Q; i++){
-            st = new StringTokenizer(br.readLine());
-            int op = Integer.parseInt(st.nextToken());
-            if(op ==100){
-                n = Integer.parseInt(st.nextToken());
-                m = Integer.parseInt(st.nextToken());                
-                for(int v=0;v<n; v++) {
-                    graph.add(new ArrayList<>());
+        @Override
+        public int compareTo(Item other) {
+            if (this.profit == other.profit) {
+                return Integer.compare(this.itemId, other.itemId);
+            }
+            return Integer.compare(other.profit, this.profit); // Descending by profit
+        }
+
+        void updateProfit() {
+            if (cost[this.dest] == INF) {
+                this.profit = -1;
+            } else {
+                this.profit = this.revenue - cost[this.dest];
+            }
+        }
+    }
+
+    public static void dijkstra(int start) {
+        cost = new int[n];
+        Arrays.fill(cost, INF);
+        cost[start] = 0;
+
+        PriorityQueue<Edge> pq = new PriorityQueue<>(Comparator.comparingInt(e -> e.weight));
+        pq.offer(new Edge(start, 0));
+
+        while (!pq.isEmpty()) {
+            Edge current = pq.poll();
+            int cur = current.dest;
+            int curCost = current.weight;
+
+            if (curCost > cost[cur]) {
+                continue;
+            }
+
+            for (Edge edge : adj.get(cur)) {
+                int next = edge.dest;
+                int nextCost = curCost + edge.weight;
+                if (nextCost < cost[next]) {
+                    cost[next] = nextCost;
+                    pq.offer(new Edge(next, nextCost));
                 }
-                for(int k = 0; k<m; k++){
-                    int v = Integer.parseInt(st.nextToken());
-                    int u = Integer.parseInt(st.nextToken());
-                    int w = Integer.parseInt(st.nextToken());
-    			    graph.get(u).add(new Node(v,w));
-                    graph.get(v).add(new Node(u,w));
-                }
-            }
-            else if(op==200) {
-                int pid = Integer.parseInt(st.nextToken());
-                int r = Integer.parseInt(st.nextToken());
-                int d = Integer.parseInt(st.nextToken());
-                products.put(pid, new Product(r,d));
-            }
-            else if(op==300){
-                int pid = Integer.parseInt(st.nextToken());
-                if(!products.containsKey(pid)) continue;
-                products.remove(pid);
-            }
-            else if(op==400) {
-                if(needDijk){
-                    dijk();
-                    needDijk= false;
-                }
-
-                int ans = find();
-                sb.append(ans);
-                sb.append("\n");
-            }
-            else if(op==500){
-                int s =Integer.parseInt(st.nextToken());
-                start = s;
-                needDijk= true;
             }
         }
-        
-        System.out.print(sb.toString());
     }
-    
-    
-    public static int find(){
-        int ans = -1;
-        int mx = -1;
-        for(int key: products.keySet()){
-            int pid = key;
-            Product p = products.get(key);
-            int r = p.revenue;
-            int d = p.dest;
-            int ct= dist[d];
-            if(ct==Integer.MAX_VALUE) continue;
-            if(r-ct<0) continue;
-            if(mx< r-ct) {
-                mx = r-ct;
-                ans = pid;
+
+    public static int sell(PriorityQueue<Item> pq) {
+        while (!pq.isEmpty()) {
+            Item item = pq.peek();
+            if (item.profit < 0) {
+                break;
             }
-            if(mx==r-ct){
-                ans = Math.min(ans,pid);
+            pq.poll();
+            if (itemDict.get(item.itemId) == 1) {
+                return item.itemId;
             }
         }
-        if(ans!=-1) {
-            products.remove(ans);
+        return -1;
+    }
+
+    public static void updateItem(PriorityQueue<Item> pq) {
+        List<Item> tempList = new ArrayList<>(pq);
+        for (Item item : tempList) {
+            item.updateProfit();
         }
-        return ans;
-    }
-    public static void dijk(){
-        dist = new int[n];
-        Arrays.fill(dist, Integer.MAX_VALUE);
-        dist[start]=0;
-
-    	PriorityQueue<Node> pq = new PriorityQueue<>((a,b)->a.distance-b.distance);
-		pq.add(new Node(start,0));
-
-		while(!pq.isEmpty()){
-			Node cur = pq.poll();
-			for(Node node : graph.get(cur.to)) {
-				if(dist[node.to] > dist[cur.to] + node.distance) {
-					dist[node.to] = dist[cur.to] + node.distance;
-					pq.add(new Node(node.to, dist[node.to]));
-				}
-			}
-		}
+        pq.clear();
+        pq.addAll(tempList);
     }
 
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int Q = sc.nextInt();
+        int dumy = sc.nextInt();
+        n = sc.nextInt();
+        m = sc.nextInt();
+
+        adj = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            adj.add(new ArrayList<>());
+        }
+
+        for (int i = 0; i < m; i++) {
+            int v = sc.nextInt();
+            int u = sc.nextInt();
+            int w = sc.nextInt();
+            adj.get(v).add(new Edge(u, w));
+            adj.get(u).add(new Edge(v, w));
+        }
+
+        dijkstra(0);
+
+        PriorityQueue<Item> pqItem = new PriorityQueue<>();
+        itemDict = new HashMap<>();
+
+        for (int i = 1; i < Q; i++) {
+            int cmd = sc.nextInt();
+            // System.out.println(cmd);
+            if (cmd == 200) {
+                int itemId = sc.nextInt();
+                int revenue = sc.nextInt();
+                int dest = sc.nextInt();
+                Item item = new Item(itemId, revenue, dest);
+                pqItem.offer(item);
+                itemDict.put(itemId, 1);
+            } else if (cmd == 300) {
+                int itemId = sc.nextInt();
+                itemDict.put(itemId, 0); // Mark as inactive
+            } else if (cmd == 400) {
+                int result = sell(pqItem);
+                System.out.println(result);
+            } else if (cmd == 500) {
+                int s = sc.nextInt();
+                dijkstra(s);
+                updateItem(pqItem);
+            }
+        }
+        sc.close();
+    }
 }
