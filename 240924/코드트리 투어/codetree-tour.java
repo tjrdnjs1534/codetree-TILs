@@ -45,7 +45,8 @@ public class Main {
                     int v = Integer.parseInt(st.nextToken());
                     int u = Integer.parseInt(st.nextToken());
                     int w = Integer.parseInt(st.nextToken());
-                    if(nodes[v][u] == 0){
+                    if(v==u) continue;
+                    if(nodes[v][u] == 0 ){
                         nodes[v][u] = w;
                         nodes[u][v] = w;
                         cost[v][u] = w;
@@ -68,10 +69,13 @@ public class Main {
             }
             else if(op==300){
                 int pid = Integer.parseInt(st.nextToken());
+                if(!products.containsKey(pid)) continue;
                 products.remove(pid);
             }
             else if(op==400) {
                 int ans = find();
+                // print();
+                // System.out.println();
                 sb.append(ans);
                 sb.append("\n");
             }
@@ -95,7 +99,7 @@ public class Main {
     public static void print(){
         for(int i=0; i<n; i++){
             for(int j=0; j<n; j++){
-                System.out.printf("%5d ", cost[i][j]);
+                System.out.printf("%2d ", cost[i][j] == 100000 ? -1 : cost[i][j]  );
             }
             System.out.println();
         }
@@ -115,6 +119,9 @@ public class Main {
             if(mx< r-ct) {
                 mx = r-ct;
                 ans = pid;
+            }
+            if(mx==r-ct){
+                ans = Math.min(ans,pid);
             }
         }
         if(ans!=-1) {
