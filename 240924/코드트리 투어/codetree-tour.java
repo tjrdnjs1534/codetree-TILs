@@ -11,6 +11,7 @@ public class Main {
     static ArrayList<ArrayList<Node>> graph = new ArrayList<>();
     static int[] dist;
     static StringBuilder sb = new StringBuilder();
+    static boolean needDijk = true;
 
     static class Node{
 		int to;
@@ -51,8 +52,6 @@ public class Main {
     			    graph.get(u).add(new Node(v,w));
                     graph.get(v).add(new Node(u,w));
                 }
-                // ploid();
-                dijk();
             }
             else if(op==200) {
                 int pid = Integer.parseInt(st.nextToken());
@@ -66,16 +65,19 @@ public class Main {
                 products.remove(pid);
             }
             else if(op==400) {
+                if(needDijk){
+                    dijk();
+                    needDijk= false;
+                }
+
                 int ans = find();
-                // print();
-                // System.out.println();
                 sb.append(ans);
                 sb.append("\n");
             }
             else if(op==500){
                 int s =Integer.parseInt(st.nextToken());
                 start = s;
-                dijk();
+                needDijk= true;
             }
         }
         
