@@ -28,7 +28,7 @@ public class Main {
             visited = new boolean[4];
             rotate(n,d);
             init();
-            tmp = new int[4][LENGTH];
+            // print();
         }
         int s1 = seats[0][0];
         int s2 = seats[1][0];
