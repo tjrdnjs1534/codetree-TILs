@@ -8,6 +8,7 @@ public class Main {
     static int[] dx = {-1,0,1,0};
     static int[] dy = {0,-1,0,1};
     static ArrayList<Piece> pieces = new ArrayList<>();
+    static ArrayList<int[]> another = new ArrayList<>();
     static int ans =Integer.MAX_VALUE;
     public static class Piece{
         int x;
@@ -40,6 +41,9 @@ public class Main {
                 map[i][j] = Integer.parseInt(st.nextToken());
                 if(map[i][j] !=0 && map[i][j]!=6){
                     pieces.add(new Piece(i,j,map[i][j]));
+                }
+                if(map[i][j]==6){
+                    another.add(new int[]{i,j});
                 }
             }
 		}
@@ -95,6 +99,11 @@ public class Main {
                     break;
             }
         } 
+        for(int[] lo : another){
+            int l1 = lo[0];
+            int l2 = lo[1];
+            canGo[l1][l2] = true;
+        }
         int cnt = 0;
         for(int i=0; i<n; i++){
             for(int j=0; j<m; j++){
