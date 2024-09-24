@@ -8,7 +8,6 @@ public class Main {
     static int[] dx = {-1,0,1,0};
     static int[] dy = {0,-1,0,1};
     static ArrayList<Piece> pieces = new ArrayList<>();
-    static ArrayList<int[]> another = new ArrayList<>();
     static int ans =Integer.MAX_VALUE;
     public static class Piece{
         int x;
@@ -42,9 +41,7 @@ public class Main {
                 if(map[i][j] !=0 && map[i][j]!=6){
                     pieces.add(new Piece(i,j,map[i][j]));
                 }
-                if(map[i][j]==6){
-                    another.add(new int[]{i,j});
-                }
+                
             }
 		}
         solution(new ArrayList<>(),0);
@@ -58,6 +55,12 @@ public class Main {
         }
         for(int i=start; i<pieces.size(); i++){
             Piece p = pieces.get(i);
+            if(p.type==5){
+                selects.add(new Piece(p.x, p.y, p.type, 1) );
+                solution(selects, start+1 );
+                selects.remove(selects.size()-1);
+                continue;
+            }
             for(int d =0; d<4; d++){
                 selects.add(new Piece(p.x, p.y, p.type, d));
                 solution(selects, start+1 );
@@ -99,15 +102,10 @@ public class Main {
                     break;
             }
         } 
-        for(int[] lo : another){
-            int l1 = lo[0];
-            int l2 = lo[1];
-            canGo[l1][l2] = true;
-        }
         int cnt = 0;
         for(int i=0; i<n; i++){
             for(int j=0; j<m; j++){
-                if(canGo[i][j]==false){
+                if(canGo[i][j]==false && map[i][j] !=6){
                     cnt++;
                 }
             }
