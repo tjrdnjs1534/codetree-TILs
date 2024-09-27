@@ -11,6 +11,7 @@ public class Main {
     static int[] mx = {-1,-1,1,1};
     static int[] my = {-1,1,-1,1};
     static int ans;
+    static boolean isOver;
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine());
@@ -29,6 +30,7 @@ public class Main {
         for(int i=0; i<m; i++){
             grow();reproduce();
             jechoje();
+            if(isOver) break;
             decrease();
         }
         System.out.println(ans);
@@ -116,6 +118,10 @@ public class Main {
                     }
                 }
             }
+        }
+        if(r==21) {
+            isOver = true;
+            return;
         }
         ans+= map[r][c];
         map[r][c] =0;
