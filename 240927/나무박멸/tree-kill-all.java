@@ -134,7 +134,10 @@ public class Main {
                 nx = nx +mx[d];
                 ny = ny + my[d];
                 if(isOut(nx,ny)) break;
-                if(map[nx][ny] == 0 || map[nx][ny] ==-1) break;
+                if(map[nx][ny] == 0 || map[nx][ny] ==-1) {
+                    jecho[nx][ny] = C+1;
+                    break;
+                }
                 ans += map[nx][ny]; 
                 map[nx][ny] = 0;
                 jecho[nx][ny]= C+1;
