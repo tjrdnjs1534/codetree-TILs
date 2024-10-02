@@ -1,19 +1,27 @@
-import java.util.*;
 import java.io.*;
+import java.util.*;
 
 public class Main {
-    static int L,Q;
-    static ArrayList<HashMap<String,Integer>> rail = new ArrayList<>();
-    static int now = 0;
-    static Person[] seats;
-    static StringBuilder sb = new StringBuilder();
-    public static class Person{
-        String name;
-        int remain;
+    static int L, Q;
+    static List<Command> commands = new ArrayList<>();
+    static Map<String, Integer> sittingPosition = new HashMap<>(); // 손님이 앉은 자리 매핑
+    static Set<String> visitingCustomerNames = new HashSet<>(); // 방문한 손님 목록 저장
+    static Map<String, Integer> visitCustomerTime = new HashMap<>(); // 손님이 방문한 시간대
+    static Map<String, Integer> eatCount = new HashMap<>(); // 손님이 먹어야할 초밥 갯수 매핑
+    static List<Command> sushiDisappearCommands = new ArrayList<>(); // 초밥이 사라지는 시점의 명령 저장
+    static int sushiCount = 0; // 남은 초밥 갯수
+    static int customerCount = 0; // 남은 손님 명수
 
-        Person(String name, int remain){
+    static class Command {
+        int cmd, x, t, n;
+        String name;
+
+        Command(int cmd, int x, int t, int n, String name) {
+            this.cmd = cmd;
+            this.x = x;
+            this.t = t;
+            this.n = n;
             this.name = name;
-            this.remain = remain;
         }
     }
 
@@ -22,104 +30,99 @@ public class Main {
         StringTokenizer st = new StringTokenizer(br.readLine());
         L = Integer.parseInt(st.nextToken());
         Q = Integer.parseInt(st.nextToken());
-        for(int i=0; i<L; i++){
-            rail.add(new HashMap<>());
-        }
-        seats = new Person[L];
 
-        for(int step = 0; step<Q; step++){
+        for (int i = 0; i < Q; i++) {
             st = new StringTokenizer(br.readLine());
-            int op = Integer.parseInt(st.nextToken());
-            if(op == 100){
-                int t = Integer.parseInt(st.nextToken());
-                int x = Integer.parseInt(st.nextToken());
-                String name = st.nextToken();
-                rotateRail(t);
-                HashMap<String,Integer> cell = rail.get(x);
-                cell.put(name, cell.getOrDefault(name, 0)+1);
-                eat(x);
-            }
-            else if(op ==200){
-                int t = Integer.parseInt(st.nextToken());
-                int x = Integer.parseInt(st.nextToken());
-                String name = st.nextToken();
-                int n = Integer.parseInt(st.nextToken());
-                rotateRail(t);
-                seats[x] = new Person(name, n);
-                eat(x);
-                // System.out.println(now+"초");
-                // print();
-            }
-            else if(op==300){
-                int t = Integer.parseInt(st.nextToken());
-                rotateRail(t);
-                photo();
-            }
-        }
-        System.out.println(sb.toString());
+            int cmd = Integer.parseInt(st.nextToken());
+            int t = -1, x = -1, n = -1;
+            String name = "";
 
-    }
-    public static void rotate(){
-        HashMap<String,Integer> last = rail.get(L-1);
-        rail.remove(L-1);
-        rail.add(0,last);
-    }
-    public static void print(){
-        for(int i=0; i<L; i++){
-            System.out.println(i+"에 있는 스시");
-            HashMap<String,Integer> cell = rail.get(i);
-            cell.forEach((k,v)->{
-                System.out.println(k+" " + v);
-            });
-        }
-    }
-    public static void eat(int i){
-        Person p = seats[i];
-            if(seats[i] != null){
-                int remain = p.remain;
-                int railSushi = rail.get(i).getOrDefault(p.name, 0);
-                if(railSushi ==0) return;
-                if(railSushi - remain > 0){
-                    p.remain = 0;
-                    rail.get(i).put(p.name,railSushi - remain);
-                    seats[i] = null;
-                }
-                else if(railSushi == remain){
-                    p.remain = 0;
-                    rail.get(i).remove(p.name);
-                    seats[i] = null;
-                }
-                else{
-                    p.remain -=railSushi;
-                    rail.get(i).remove(p.name);
-                }
-            }
-    }
-    public static void eatEvery(){
-        for(int i=0; i<L; i++){
-            eat(i);
-        }
-    }
-    public static void rotateRail(int t){
-        for(; now<t; now++){
-            rotate();
-            eatEvery();
-        }
-    }
-    public static void photo(){
-        int sushi = 0;
-        int people = 0;
-        for(int i=0; i<L; i++){
-            if(seats[i]!=null) {
-                people++;
-                // System.out.println(seats[i].name);
-            }
-            HashMap<String,Integer> cell = rail.get(i);
-            for(int v : cell.values()){
-                sushi+=v;
-            }
-        }
-        sb.append(people).append(" ").append(sushi).append("\n");
+            if (cmd == 100) {
+                t = Integer.parseInt(st.nextToken());
+                x = Integer.parseInt(st.nextToken());
+                name = st.nextToken();
+            } else if (cmd == 200) {
+                t = Integer.parseInt(st.nextToken());
+                x = Integer.parseInt(st.nextToken());
+                name = st.nextToken();
+                n = Integer.parseInt(st.nextToken());
 
+                visitingCustomerNames.add(name);
+                sittingPosition.put(name, x); // 손님의 앉은 위치 저장
+                visitCustomerTime.put(name, t); // 손님 방문 시간 저장
+                eatCount.put(name, n); // 먹어야 할 초밥 갯수 저장
+            } else if (cmd == 300) {
+                t = Integer.parseInt(st.nextToken());
+            }
+
+            Command command = new Command(cmd, x, t, n, name);
+            commands.add(command);
+        }
+
+        solve();
+    }
+
+    static void solve() {
+        // 초밥 명령 처리 (생성 명령을 기반으로 초밥 사라짐 명령 추가)
+        for (Command command : commands) {
+            if (command.cmd != 100) continue; // 초밥 생성 명령이 아니면 패스
+
+            int meetSushiCustomerTime = 0; // 손님이 초밥을 먹기 위해 기다리는 시간
+            int eatSushiTime = 0; // 초밥을 먹는 시간
+
+            if (command.t < visitCustomerTime.get(command.name)) {
+                // 손님 입장 전 초밥이 존재하는 경우
+                int nowSushiPosition = command.x;
+                int diffT = visitCustomerTime.get(command.name) - command.t;
+                nowSushiPosition = (nowSushiPosition + diffT) % L;
+
+                if (sittingPosition.get(command.name) >= nowSushiPosition) {
+                    meetSushiCustomerTime = sittingPosition.get(command.name) - nowSushiPosition;
+                } else {
+                    meetSushiCustomerTime = (sittingPosition.get(command.name) + L) - nowSushiPosition;
+                }
+
+                eatSushiTime = visitCustomerTime.get(command.name) + meetSushiCustomerTime;
+            } else {
+                // 손님이 입장 후 초밥이 들어오는 경우
+                int nowSushiPosition = command.x;
+
+                if (sittingPosition.get(command.name) >= nowSushiPosition) {
+                    meetSushiCustomerTime = sittingPosition.get(command.name) - nowSushiPosition;
+                } else {
+                    meetSushiCustomerTime = (sittingPosition.get(command.name) + L) - nowSushiPosition;
+                }
+
+                eatSushiTime = command.t + meetSushiCustomerTime;
+            }
+
+            // 초밥이 사라지는 시점에 대한 명령 추가
+            sushiDisappearCommands.add(new Command(101, -1, eatSushiTime, -1, command.name));
+        }
+
+        // 전체 명령 리스트에 초밥 사라짐 명령 추가
+        commands.addAll(sushiDisappearCommands);
+
+        // 명령 정렬 (시간 순서대로, 시간이 같으면 명령어 순으로)
+        commands.sort((a, b) -> {
+            if (a.t != b.t) return Integer.compare(a.t, b.t);
+            return Integer.compare(a.cmd, b.cmd);
+        });
+
+        // 정렬된 명령 처리
+        for (Command command : commands) {
+            if (command.cmd == 100) {
+                sushiCount++; // 초밥 생성
+            } else if (command.cmd == 101) {
+                sushiCount--; // 초밥 소멸
+                eatCount.put(command.name, eatCount.get(command.name) - 1);
+                if (eatCount.get(command.name) <= 0) customerCount--; // 손님이 다 먹으면 줄어듦
+            } else if (command.cmd == 200) {
+                customerCount++; // 손님 방문
+            } else if (command.cmd == 300) {
+                // 촬영 명령, 남은 손님 수와 초밥 수 출력
+                System.out.println(customerCount + " " + sushiCount);
+            }
+        }
     }
 }
