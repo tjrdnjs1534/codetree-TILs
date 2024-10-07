@@ -51,7 +51,13 @@ public class Main {
     public static void bfs(int startX , int startY){
         Queue<int[]> q = new LinkedList<>();
         dist = new int[n][n];
+        for(int i=0; i<n; i++){
+            for(int j =0;j<n; j++){
+                dist[i][j]=-1;
+            }
+        }
         q.offer(new int[]{startX, startY});
+        dist[startX][startY] = 0;
         while(!q.isEmpty()){
             int[] location = q.poll();
             int curX = location[0];
@@ -75,6 +81,7 @@ public class Main {
         for(int i=0; i<n; i++){
             for(int j=0; j<n; j++){
                 if(map[i][j] !=0 && map[i][j] < robotLevel){
+                    if(dist[i][j]==-1)continue;
                     if(dist[i][j] < min){
                         min = dist[i][j];
                         x = i;
