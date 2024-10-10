@@ -70,10 +70,10 @@ public class Main {
 
                     // System.out.println(i+" "+ j +" "+ at.speed +" "+ at.dir + "  "+ nx + " " + ny);
 
-                    if(nx>=n) nx = nx%n;
-                    else if(nx<0) nx = n + (nx%n);
-                    if(ny>=n) ny = ny%n;
-                    else if(ny<0) ny= n + (ny%n);
+                    if(nx >= n) nx = nx % n;      
+                    else if(nx < 0) nx = (nx % n + n) % n;  // 왼쪽 경계를 넘어가면 음수 나머지를 보정
+                    if(ny >= n) ny = ny % n;      
+                    else if(ny < 0) ny = (ny % n + n) % n;  // 위쪽 경계를 넘어가면 음수 나머지를 보정
                     tmp[nx][ny].add(at);
                 }
             }
