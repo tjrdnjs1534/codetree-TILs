@@ -1,196 +1,256 @@
-// public class Main {
-//     static int n, m;
-//     static int[][] map;
-//     public static void main(String[] args) {
-//         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-//         StringTokenizer st = new StringTokenizer(br.readLine());
-//         n = Integer.parseInt(br.readLine());
-//         m = Integer.parseInt(br.readLine());
-//         map = new int[n][n];
-//         for(int i=0; i<n; i++){
-//             st = new StringTokenizer(br.readLine());
-//             for(int j =0; j<n; j++){
-//                 map[i][j] = Integer.parseInt(br.readLine());
-//             }
-//         }
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.LinkedList;
+import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.StringTokenizer;
 
-//     }
-//     public static void findLargestBombGroup(){
-//         for(int )
-//     }
-//     public static void eraseBomb()
-//     public static void gravity(){
+public class Main {
+	
+	static int N,M,result;
+	static int[][] board;
+	static int[] dx = {-1,1,0,0};
+	static int[] dy = {0,0,-1,1};
+	static PriorityQueue<Point> pq;
+	static boolean[][] visited;
+	static class Point implements Comparable<Point>{
+		int x,y;
+		int redCnt;
+		int cnt;
+		public Point(int x, int y, int redCnt, int cnt) {
+			this.x = x;
+			this.y = y;
+			this.redCnt = redCnt;
+			this.cnt = cnt;
+		}
+		@Override
+		public int compareTo(Point o) {
+			if(this.cnt == o.cnt) {	
+				if(this.redCnt == o.redCnt) {
+					if(this.x == o.x) {
+						return this.y - o.y;
+					}
+					return o.x - this.x;
+				}
+				return this.redCnt - o.redCnt;
+			}
+			return o.cnt - this.cnt;
+		}
+	}
 
-//     }
-    
-//     public static void rotate(int[][] matrix, int r1, int c1, int r2, int c2) {
-//         int n = r2 - r1 + 1;
-//         for (int i = 0; i < n / 2; i++) {
-//             for (int j = 0; j < (n + 1) / 2; j++) {
-//                 int temp = matrix[r1 + i][c1 + j];
-//                 matrix[r1 + i][c1 + j] = matrix[r1 + j][c2 - i];
-//                 matrix[r1 + j][c2 - i] = matrix[r2 - i][c2 - j];
-//                 matrix[r2 - i][c2 - j] = matrix[r2 - j][c1 + i];
-//                 matrix[r2 - j][c1 + i] = temp;
-//             }
-//         }
-//     }
+	public static void main(String[] args) throws IOException{
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		StringTokenizer st;
+		
+		st = new StringTokenizer(br.readLine());
+		N = Integer.parseInt(st.nextToken());
+		M = Integer.parseInt(st.nextToken());
+		
+		board = new int[N][N];
+		for(int i=0;i<N;i++) {
+			st = new StringTokenizer(br.readLine());
+			for(int j=0;j<N;j++) {
+				board[i][j] = Integer.parseInt(st.nextToken());
+				// 빨간색 폭탄 : -2로 표기
+				if(board[i][j] == 0) board[i][j] = -2;
+			}
+		} // input end
+		
+		solve();
+		
+		System.out.println(result);
+	}
 
-    
-    
-// }
+	private static void solve() {
+		
+		while(is_possible()) {
+			// 1. 현재 가장 큰 폭탄 묶음 찾기
+			find_biggest_bomb();
+			
+			// 2. 선택된 폭탄 모두 제거
+			int score = remove_bomb();
 
-import java.util.*;
+			// 3. 중력 작용
+			gravity();
+			
+			// 4. 반시계 90도 회전
+			rotate_board();
+			
+			// 5. 다시 중력 작용
+			gravity();
+			
+			result += score*score;
+		}
+	}
+	
+	// 반시계 90도 회전
+	private static void rotate_board() {
+		int[][] copy = new int[N][N];
+		int row = N-1;
+		
+		for(int j=0;j<N;j++) {
+			for(int i=0;i<N;i++) {
+				copy[row][i] = board[i][j];
+			}
+			row--;
+		}
+		
+		board = copy;
+	}
 
-class Main {
-    static int n, m;
-    static int[][] grid;
-    static boolean[][] visited;
-    static int totalScore = 0;
-    static int[] dx = {-1, 1, 0, 0}; // 상하좌우
-    static int[] dy = {0, 0, -1, 1}; // 상하좌우
+	private static void gravity() {
+		int[][] temp = new int[N][N];
 
-    static class Group implements Comparable<Group> {
-        int size, redCount, row, col;
-        List<int[]> cells;
+		for(int j=0;j<N;j++) {
+			int lastIdx = N-1;
+			for(int i=N-1;i>=0;i--) {
+				if(board[i][j] == 0) continue;
+				if(board[i][j] == -1) {
+					lastIdx = i;
+				}
+				temp[lastIdx--][j] = board[i][j];
+			}
+		}
+		board = temp;
+	}
 
-        Group(int size, int redCount, int row, int col, List<int[]> cells) {
-            this.size = size;
-            this.redCount = redCount;
-            this.row = row;
-            this.col = col;
-            this.cells = cells;
-        }
+	private static int remove_bomb() {
+		Point target = pq.poll();
+		
+		Queue<int[]> q = new LinkedList<>();
+		boolean[][] visited = new boolean[N][N];
+		q.add(new int[] {target.x,target.y,1});
+		int num = board[target.x][target.y];
+		visited[target.x][target.y] = true;
+		int count = 0;
+		
+		while(!q.isEmpty()) {
+			int[] temp = q.poll();
+			int x = temp[0];
+			int y = temp[1];
+			
+			for(int d=0;d<4;d++) {
+				int nx = x + dx[d];
+				int ny = y + dy[d];
+				
+				if(!is_valid(nx, ny) || visited[nx][ny]) continue;
+				
+				if(board[nx][ny] == -1) continue;
+				
+				if(board[nx][ny] == -2 || board[nx][ny] == num) {
+					count++;
+					visited[nx][ny] = true;
+					q.add(new int[] {nx,ny});
+					board[nx][ny] = 0;
+					continue;
+				}
+			}
+		}
+		
+		board[target.x][target.y] = 0;
+		
+		return count+1;
+	}
 
-        @Override
-        public int compareTo(Group other) {
-            if (this.size != other.size) return Integer.compare(other.size, this.size); // 큰 폭탄 묶음 우선
-            if (this.redCount != other.redCount) return Integer.compare(this.redCount, other.redCount); // 빨간색 적은 묶음 우선
-            if (this.row != other.row) return Integer.compare(other.row, this.row); // 행이 큰 묶음 우선
-            return Integer.compare(this.col, other.col); // 열이 작은 묶음 우선
-        }
-    }
+	private static void find_biggest_bomb() {
+		pq = new PriorityQueue<>();
+		visited = new boolean[N][N];
+		
+		for(int i=0;i<N;i++) {
+			for(int j=0;j<N;j++) {
+				if(!visited[i][j] && board[i][j] >= 1 && board[i][j] <= M) {
+					visited[i][j] = true;
+					bfs(i,j,true);
+				}
+			}
+		}
+	}
+	
+	// 폭탄 구역 체크하는 함수 -> 기준점 찾기
+	private static boolean bfs(int r, int c, boolean sim) {
+		boolean flag = false;
+		
+		Queue<int[]> q = new LinkedList<>();
+		q.add(new int[] {r,c,1});
+		int num = board[r][c];
+		visited[r][c] = true;
+		int count = 1;
+		int redCount = 0;
+		// 기준점
+		int tx = r;
+		int ty = c;
+		
+		while(!q.isEmpty()) {
+			int[] temp = q.poll();
+			int x = temp[0];
+			int y = temp[1];
+			
+			// 기준점 갱신
+			if(board[x][y] != -2) {
+				if(tx < x) {
+					tx = x;
+					ty = y;
+				}
+				
+				else if(tx == x && ty > y) {
+					ty = y;
+				}
+			}
+			
+			for(int d=0;d<4;d++) {
+				int nx = x + dx[d];
+				int ny = y + dy[d];
+				
+				if(!is_valid(nx, ny) || visited[nx][ny]) continue;
+				
+				if(board[nx][ny] == -1) continue;
+				
+				// 빨간색 폭탄이거나 똑같은 색깔인 경우
+				if(board[nx][ny] == -2 || board[nx][ny] == num) {
+					count++;
+					if(board[nx][ny] == -2) redCount++;
+					visited[nx][ny] = true;
+					q.add(new int[] {nx,ny});
+					continue;
+				}
+			}
+		}
+		
+		for(int i=0;i<N;i++) {
+			for(int j=0;j<N;j++) {
+				if(visited[i][j]) {
+					if(board[i][j] == -2) visited[i][j] = false;
+				}
+			}
+		}
+		
+		if(count >= 2) flag = true;
+		
+		if(flag && sim) { // 가장 큰 폭탄 묶음 찾는 경우에만
+			pq.add(new Point(tx, ty, redCount,count));
+		}
+		
+		return flag;
+	}
 
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        n = sc.nextInt();
-        m = sc.nextInt();
-        grid = new int[n][n];
+	private static boolean is_possible() {
+		visited = new boolean[N][N];
+		
+		for(int i=0;i<N;i++) {
+			for(int j=0;j<N;j++) {
+				if(!visited[i][j] && board[i][j] >= 1 && board[i][j] <= M) {
+					if(bfs(i,j,false)) return true;
+				}
+			}
+		}
+		
+		return false;
+	}
 
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                grid[i][j] = sc.nextInt();
-            }
-        }
+	private static boolean is_valid(int r, int c) {
+		if(r<0 || c<0 || r>=N || c>=N) return false;
+		return true;
+	}
 
-        while (true) {
-            Group bestGroup = findBestGroup();
-            if (bestGroup == null) break;
-
-            // 점수 계산
-            totalScore += bestGroup.size * bestGroup.size;
-
-            // 폭탄 묶음 제거
-            for (int[] cell : bestGroup.cells) {
-                grid[cell[0]][cell[1]] = -2; // 제거된 칸 표시
-            }
-
-            // 중력 작용
-            applyGravity();
-
-            // 90도 반시계 회전
-            rotate90();
-
-            // 다시 중력 작용
-            applyGravity();
-        }
-
-        System.out.println(totalScore);
-    }
-
-    // BFS로 폭탄 묶음을 찾음
-    static Group findBestGroup() {
-        visited = new boolean[n][n];
-        Group bestGroup = null;
-
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                if (grid[i][j] > 0 && !visited[i][j]) { // 빨간색이 아닌 폭탄을 기준으로
-                    Group group = bfs(i, j);
-                    if (group != null && (bestGroup == null || group.compareTo(bestGroup) < 0)) {
-                        bestGroup = group;
-                    }
-                }
-            }
-        }
-
-        return bestGroup;
-    }
-
-    static Group bfs(int x, int y) {
-        Queue<int[]> queue = new LinkedList<>();
-        List<int[]> cells = new ArrayList<>();
-        boolean[][] tempVisited = new boolean[n][n];
-        int redCount = 0;
-        int baseColor = grid[x][y];
-        int row = x, col = y;
-
-        queue.add(new int[]{x, y});
-        cells.add(new int[]{x, y});
-        visited[x][y] = true;
-        tempVisited[x][y] = true;
-
-        while (!queue.isEmpty()) {
-            int[] current = queue.poll();
-            int cx = current[0];
-            int cy = current[1];
-
-            for (int d = 0; d < 4; d++) {
-                int nx = cx + dx[d];
-                int ny = cy + dy[d];
-
-                if (nx < 0 || ny < 0 || nx >= n || ny >= n || tempVisited[nx][ny]) continue;
-                if (grid[nx][ny] == baseColor || grid[nx][ny] == 0) {
-                    if (grid[nx][ny] == 0) redCount++;
-                    queue.add(new int[]{nx, ny});
-                    cells.add(new int[]{nx, ny});
-                    tempVisited[nx][ny] = true;
-                    visited[nx][ny] = true;
-                }
-            }
-        }
-
-        if (cells.size() < 2) return null; // 폭탄 묶음이 2개 미만이면 무시
-        return new Group(cells.size(), redCount, row, col, cells);
-    }
-
-    // 중력 작용 함수
-    static void applyGravity() {
-        for (int j = 0; j < n; j++) {
-            int emptyRow = n - 1;
-            for (int i = n - 1; i >= 0; i--) {
-                if (grid[i][j] == -2) continue; // 제거된 칸은 무시
-                if (grid[i][j] == -1) { // 돌은 떨어지지 않음
-                    emptyRow = i - 1;
-                } else {
-                    if (i != emptyRow) {
-                        grid[emptyRow][j] = grid[i][j];
-                        grid[i][j] = -2;
-                    }
-                    emptyRow--;
-                }
-            }
-        }
-    }
-
-    // 반시계 방향 90도 회전 함수
-    static void rotate90() {
-        int[][] newGrid = new int[n][n];
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                newGrid[n - 1 - j][i] = grid[i][j];
-            }
-        }
-        grid = newGrid;
-    }
 }
